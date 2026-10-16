@@ -1,48 +1,65 @@
 # PlayBeat Visual
 
-Frontend recovered from https://visual.playbeat.live/ on 2026-10-16.
-The deployed HTML, styles, and browser JavaScript are preserved in `public/index.html`.
+Creative tools for https://visual.playbeat.live/. The original live frontend is preserved at `public/index.html`; its **Open creative studio** button opens the new workspace at `/studio/`.
 
-## Run locally
+## Implemented
+
+- **Design:** poster, social, and video-cover templates; editable text, shapes, uploaded images; layer selection, drag positioning, Shift/grid snapping, stacking, duplication, sizing, color, opacity, canvas alignment, undo/redo, and custom canvas dimensions.
+- **Save/export:** downloadable and reopenable design project JSON, PNG, and SVG. Images are embedded in projects. SVG preserves shapes and images but rasterizes text to preserve browser wrapping; JSON retains editable text.
+- **Video:** import multiple local clips, sequential timeline, trim, split at playhead, reorder/delete clips, seek and preview, editable sequence caption, design overlays, cuts or fade-through-black transitions, background music and volume controls, and real-time WebM export with mixed audio.
+- **AI:** text-to-video or reference-image-to-video requests, camera-motion presets, job status polling, output links, and generated-video import. Uses the Cloudflare Pages function in `functions/api/generate.js` and a configured Replicate model. This is a provider integration, not a bundled AI model or an integration with Higgsfield itself.
+
+These are initial tools inspired by the requested workflows, not full Canva, Figma, CapCut, or Higgsfield replacements. Collaborative editing, reusable component libraries, arbitrary video tracks, automatic speech captions, and MP4 encoding are not implemented. Video export is WebM and runs in real time; keep the tab active. Video/audio source files and timeline edits are session-only and are not included in saved design JSON. Export before closing. Decode support depends on your browser; H.264 MP4 and WebM are recommended inputs.
+
+## Local development
+
+Use Node 24 and Python 3:
 
 ```sh
-python3 -m http.server 8000 --directory public
+npm ci
+npm run dev
 ```
 
-Open the local server in your browser. Image upload, adjustments, text, browser-local projects, and image exports are implemented by the recovered frontend. Inline JavaScript syntax was checked; interactive browser behavior has not been revalidated in this repository.
+The static site runs on port 8010. Open `/studio/` to use the new editor. The static Python server does **not** run Cloudflare API functions; design and local video editing work without AI configuration.
 
-## Cloudflare hosting
+## Cloudflare deployment
 
-For a Cloudflare Pages static deployment, use `public` as the output directory; no build command is needed. Connect this GitHub repository in Cloudflare to enable deployment from future commits. Uploading to GitHub does not update the current live site automatically unless its deployment is connected.
+1. In **Workers & Pages**, connect this repository to a **Pages** project, or use an existing compatible Pages project.
+2. Set the production branch to `main`, leave the build command empty, and set the build output directory to `public` (repository root remains the default).
+3. Pages deploys the root `functions/` directory alongside the static files. A static file-only upload will not install the AI API.
+4. Confirm `/studio/` loads and the original editor still opens. Connect `visual.playbeat.live` to this Pages project only after testing its preview deployment. Preserve/export the original Worker code and bindings before changing a current Worker deployment.
 
-The existing frontend calls `POST /api/ai`. Its original Cloudflare Worker code, provider configuration, and secrets were not recoverable from the public website and are **not included**. A static deployment alone will not provide AI editing. Preserve the existing Worker until its source and bindings are exported. Never commit API keys.
+This repository does not automatically replace an existing standalone Worker. Pushing code to GitHub alone does not prove the live domain updated.
 
-The requested Canva/Figma-style design, CapCut-style video timeline, and Higgsfield-style generation features remain planned, not implemented.
+### AI configuration
 
----
+Set these values in the Cloudflare Pages project's production/preview environment settings, then redeploy:
 
-# PlayBeat Visual: design, video editing, and AI tools
+| Name | Purpose |
+| --- | --- |
+| `REPLICATE_API_TOKEN` | Secret provider token. Requires provider access and billing. |
+| `STUDIO_ACCESS_KEY` | Secret chosen by the site administrator; entered by authorized users in the AI panel. Keep private. It protects the paid generation API. |
+| `REPLICATE_MODEL` | Supported video model in `owner/model` form, such as `minimax/video-01`. Verify its current availability, costs, and schema with Replicate. |
+| `REPLICATE_IMAGE_INPUT` | Optional image field name; defaults to `first_frame_image`. Must match the chosen model's schema. |
 
-Target app: https://visual.playbeat.live/
+The chosen model must support Replicate's model prediction endpoint and `prompt` input. Image mode also requires support for the configured image input. Provider tokens stay server-side. The studio access key is held in the input for that page session, not written to project files. Provider output URLs may expire. Never commit tokens, access keys, `.env`, or `.dev.vars`.
 
-## Requested features
+The original editor also calls `/api/ai`. Its original backend was not recoverable from the public page and is not supplied here; preserve its existing Worker if that legacy endpoint is needed. The new studio's AI endpoint is `/api/generate`.
 
-- Canva-style design: templates, text styling, image uploads, crop and resize, backgrounds, and PNG/SVG export.
-- Figma-style layout: layers, groups, frames, alignment guides, snapping, reusable components, and undo/redo.
-- CapCut-style video editing: a multitrack timeline, trim and split, clip ordering, transitions, captions, music, volume controls, and video export.
-- Higgsfield-style AI creation: text-to-video, image-to-video, camera motion presets, and effects through a supported AI provider.
+## Validation
 
-## Implementation prerequisites
+```sh
+npm test
+```
 
-Locate or connect the existing Visual editor source before implementing these features. The currently connected ebuzz checkout contains a TV catalog/player rather than the Visual editing app. Preserve the existing app instead of replacing it with the TV player.
+Ten unit/API tests cover timeline mapping, split boundaries, project validation, alignment, server configuration, authorization, request validation, provider calls, polling, and sanitized errors. Provider calls in these tests are mocked; live AI generation requires the settings above and has not been verified.
 
-Choose an AI provider and configure credentials securely on the server; do not expose keys in the browser. Confirm provider capabilities, costs, and export requirements before integrating generation.
+For the browser smoke test, install Chromium and FFmpeg, start `npm run dev`, and generate local test media:
 
-## Acceptance criteria
+```sh
+ffmpeg -f lavfi -i color=c=blue:s=320x240:d=1.5 -f lavfi -i sine=frequency=440:duration=1.5 -c:v libvpx -c:a libvorbis -shortest -y /tmp/playbeat-test.webm
+ffmpeg -f lavfi -i sine=frequency=220:duration=3 -y /tmp/playbeat-music.wav
+npm run test:browser
+```
 
-- Users can create and reopen a design with editable text, images, and layers, then export it.
-- Users can import video, trim and split clips, add captions and audio, preview the timeline, and export a playable video with synchronized audio.
-- AI generation reports progress and errors, and generated assets can be inserted into a project.
-- Existing projects and current editor behavior remain functional.
-
-Status: requested scope only; features have not been implemented or deployed.
+The test defaults to `/usr/bin/chromium`; override `CHROMIUM_PATH` if necessary. `STUDIO_URL`, `TEST_VIDEO`, and `TEST_AUDIO` can override the URL/media paths. The browser test exercises real editing, save, PNG export, and video import/trim/split with music, caption, transition, and actual WebM recording. Artifacts are saved outside the repository under `/tmp/playbeat-browser-results/`.
