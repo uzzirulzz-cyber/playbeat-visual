@@ -1,3 +1,26 @@
+# PlayBeat Visual
+
+Frontend recovered from https://visual.playbeat.live/ on 2026-10-16.
+The deployed HTML, styles, and browser JavaScript are preserved in `public/index.html`.
+
+## Run locally
+
+```sh
+python3 -m http.server 8000 --directory public
+```
+
+Open the local server in your browser. Image upload, adjustments, text, browser-local projects, and image exports are implemented by the recovered frontend. Inline JavaScript syntax was checked; interactive browser behavior has not been revalidated in this repository.
+
+## Cloudflare hosting
+
+For a Cloudflare Pages static deployment, use `public` as the output directory; no build command is needed. Connect this GitHub repository in Cloudflare to enable deployment from future commits. Uploading to GitHub does not update the current live site automatically unless its deployment is connected.
+
+The existing frontend calls `POST /api/ai`. Its original Cloudflare Worker code, provider configuration, and secrets were not recoverable from the public website and are **not included**. A static deployment alone will not provide AI editing. Preserve the existing Worker until its source and bindings are exported. Never commit API keys.
+
+The requested Canva/Figma-style design, CapCut-style video timeline, and Higgsfield-style generation features remain planned, not implemented.
+
+---
+
 # PlayBeat Visual: design, video editing, and AI tools
 
 Target app: https://visual.playbeat.live/
