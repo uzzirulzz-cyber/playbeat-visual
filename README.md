@@ -7,7 +7,9 @@ Creative tools for https://visual.playbeat.live/. The original live frontend is 
 - **Design:** poster, social, and video-cover templates; editable text, shapes, uploaded images; layer selection, drag positioning, Shift/grid snapping, stacking, duplication, sizing, color, opacity, canvas alignment, undo/redo, and custom canvas dimensions.
 - **Save/export:** downloadable and reopenable design project JSON, PNG, and SVG. Images are embedded in projects. SVG preserves shapes and images but rasterizes text to preserve browser wrapping; JSON retains editable text.
 - **Video:** import multiple local clips, sequential timeline, trim, split at playhead, reorder/delete clips, seek and preview, editable sequence caption, design overlays, cuts or fade-through-black transitions, background music and volume controls, and real-time WebM export with mixed audio.
-- **AI:** text-to-video or reference-image-to-video requests, camera-motion presets, job status polling, output links, and generated-video import. Uses the Cloudflare Pages function in `functions/api/generate.js` and a configured Replicate model. This is a provider integration, not a bundled AI model or an integration with Higgsfield itself.
+- **Built-in effects:** cinematic, vintage, monochrome, vivid, and cool looks; brightness, contrast, saturation; slow zoom-in/out and left/right video pans. These run locally without provider accounts, keys, or paid APIs. Looks apply to uploaded images and video; motion applies to video. Effects are included in PNG/WebM exports, but not SVG, and settings are session-only.
+
+The Studio does not include text-to-video scene generation. The earlier optional API adapter remains in `functions/api/generate.js`, but the editor no longer exposes provider setup or generation controls. No provider configuration is needed for the built-in editor.
 
 These are initial tools inspired by the requested workflows, not full Canva, Figma, CapCut, or Higgsfield replacements. Collaborative editing, reusable component libraries, arbitrary video tracks, automatic speech captions, and MP4 encoding are not implemented. Video export is WebM and runs in real time; keep the tab active. Video/audio source files and timeline edits are session-only and are not included in saved design JSON. Export before closing. Decode support depends on your browser; H.264 MP4 and WebM are recommended inputs.
 
@@ -31,20 +33,20 @@ The static site runs on port 8010. Open `/studio/` to use the new editor. The st
 
 This repository does not automatically replace an existing standalone Worker. Pushing code to GitHub alone does not prove the live domain updated.
 
-### AI configuration
+### Optional unused generation backend
 
 Set these values in the Cloudflare Pages project's production/preview environment settings, then redeploy:
 
 | Name | Purpose |
 | --- | --- |
 | `REPLICATE_API_TOKEN` | Secret provider token. Requires provider access and billing. |
-| `STUDIO_ACCESS_KEY` | Secret chosen by the site administrator; entered by authorized users in the AI panel. Keep private. It protects the paid generation API. |
+| `STUDIO_ACCESS_KEY` | Secret chosen by the site administrator for authorized API clients. Keep private. It protects the optional paid generation API. |
 | `REPLICATE_MODEL` | Supported video model in `owner/model` form, such as `minimax/video-01`. Verify its current availability, costs, and schema with Replicate. |
 | `REPLICATE_IMAGE_INPUT` | Optional image field name; defaults to `first_frame_image`. Must match the chosen model's schema. |
 
-The chosen model must support Replicate's model prediction endpoint and `prompt` input. Image mode also requires support for the configured image input. Provider tokens stay server-side. The studio access key is held in the input for that page session, not written to project files. Provider output URLs may expire. Never commit tokens, access keys, `.env`, or `.dev.vars`.
+The chosen model must support Replicate's model prediction endpoint and `prompt` input. Image mode also requires support for the configured image input. Provider tokens stay server-side. The built-in editor does not request a studio access key. Provider output URLs may expire. Never commit tokens, access keys, `.env`, or `.dev.vars`.
 
-The original editor also calls `/api/ai`. Its original backend was not recoverable from the public page and is not supplied here; preserve its existing Worker if that legacy endpoint is needed. The new studio's AI endpoint is `/api/generate`.
+The original editor also calls `/api/ai`. Its original backend was not recoverable from the public page and is not supplied here; preserve its existing Worker if that legacy endpoint is needed. The retained optional adapter endpoint is `/api/generate`; there is no generation UI.
 
 ## Validation
 
