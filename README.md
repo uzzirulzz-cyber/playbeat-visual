@@ -13,7 +13,9 @@ The Studio uses the uploaded Start Bootstrap SB Admin v7.0.7 template and its bu
 - **Video:** import multiple local clips, sequential timeline, trim, split at playhead, reorder/delete clips, seek and preview, editable sequence caption, design overlays, cuts or fade-through-black transitions, background music and volume controls, and real-time WebM export with mixed audio.
 - **Built-in effects:** cinematic, vintage, monochrome, vivid, and cool looks; brightness, contrast, saturation; slow zoom-in/out and left/right video pans. These run locally without provider accounts, keys, or paid APIs. Looks apply to uploaded images and video; motion applies to video. Effects are included in PNG/WebM exports, but not SVG, and settings are session-only.
 
-The Studio does not include text-to-video scene generation. The earlier optional API adapter remains in `functions/api/generate.js`, but the editor no longer exposes provider setup or generation controls. No provider configuration is needed for the built-in editor.
+- **OpenRouter AI:** image-aware enhancement suggestions, editable layouts from prompts, selected-text rewriting, caption drafting from a brief, and generated/edited image previews that can be added as layers. Suggestions are reviewed before applying. Provider credentials remain in Cloudflare; no provider API key is entered into the editor.
+
+Text-to-video synthesis, voice transcription, segmentation/background removal, collaborative editing, and the complete proprietary feature sets of other editors are not provided by this integration. A general text/vision OpenRouter model does not automatically enable those capabilities. The earlier optional Replicate adapter remains separate and is not used by the Studio UI.
 
 These are initial tools inspired by the requested workflows, not full Canva, Figma, CapCut, or Higgsfield replacements. Collaborative editing, reusable component libraries, arbitrary video tracks, automatic speech captions, and MP4 encoding are not implemented. Video export is WebM and runs in real time; keep the tab active. Video/audio source files and timeline edits are session-only and are not included in saved design JSON. Export before closing. Decode support depends on your browser; H.264 MP4 and WebM are recommended inputs.
 
@@ -37,20 +39,22 @@ The static site runs on port 8010. Open `/studio/` to use the new editor. The st
 
 This repository does not automatically replace an existing standalone Worker. Pushing code to GitHub alone does not prove the live domain updated.
 
-### Optional unused generation backend
+### Existing OpenRouter connection
 
-Set these values in the Cloudflare Pages project's production/preview environment settings, then redeploy:
+Set or reuse the existing Cloudflare secret binding `OPENROUTER_API_KEY`. The handler also recognizes `OPENROUTER_KEY` or a binding literally named `secret`; do not create duplicate keys when an existing binding works. No secret value belongs in GitHub or the browser. This workspace could not inspect the Cloudflare account's secret values, and live model calls have not been verified.
 
-| Name | Purpose |
+| Setting | Purpose |
 | --- | --- |
-| `REPLICATE_API_TOKEN` | Secret provider token. Requires provider access and billing. |
-| `STUDIO_ACCESS_KEY` | Secret chosen by the site administrator for authorized API clients. Keep private. It protects the optional paid generation API. |
-| `REPLICATE_MODEL` | Supported video model in `owner/model` form, such as `minimax/video-01`. Verify its current availability, costs, and schema with Replicate. |
-| `REPLICATE_IMAGE_INPUT` | Optional image field name; defaults to `first_frame_image`. Must match the chosen model's schema. |
+| `OPENROUTER_API_KEY` | Existing OpenRouter key, stored as a Cloudflare secret. |
+| `OPENROUTER_MODEL` | Optional text/vision model ID, default `openai/gpt-4o-mini`. Must accept images for image-aware enhancement and JSON output for editable plans. |
+| `OPENROUTER_IMAGE_MODEL` | An available OpenRouter model with image output and the required text/image inputs. Needed only for image generation/editing; no second provider is required. Verify current model capabilities in OpenRouter. |
+| `STUDIO_ACCESS_KEY` | Optional secret for restricting paid API use. When configured, authorized users enter this application access key, never the OpenRouter token. |
 
-The chosen model must support Replicate's model prediction endpoint and `prompt` input. Image mode also requires support for the configured image input. Provider tokens stay server-side. The built-in editor does not request a studio access key. Provider output URLs may expire. Never commit tokens, access keys, `.env`, or `.dev.vars`.
+Deploy the Pages functions with the static files, and preserve the existing Cloudflare binding. `/api/ai` GET reports only configuration metadata. POST sends the chosen instruction and, for enhancement/image editing, a downscaled canvas preview to OpenRouter. Requests can consume provider credits. A missing binding/model or provider error is shown explicitly. Existing legacy `/api/ai` action responses are supported for the recovered original editor.
 
-The original editor also calls `/api/ai`. Its original backend was not recoverable from the public page and is not supplied here; preserve its existing Worker if that legacy endpoint is needed. The retained optional adapter endpoint is `/api/generate`; there is no generation UI.
+The server validates requests and uses a best-effort per-isolate request limit. That limit and same-origin checks are not account authentication or global spend controls. Restrict production access using `STUDIO_ACCESS_KEY` or Cloudflare Access and set OpenRouter budget limits. Keep image-output model selection server-side. Generated images are embedded PNG/JPEG/WebP previews, not remote executable content.
+
+The optional `functions/api/generate.js` Replicate adapter is retained from the earlier implementation, but the Studio does not call it. It requires its own provider configuration and is unrelated to the existing OpenRouter connection.
 
 ## Validation
 
@@ -58,7 +62,7 @@ The original editor also calls `/api/ai`. Its original backend was not recoverab
 npm test
 ```
 
-Ten unit/API tests cover timeline mapping, split boundaries, project validation, alignment, server configuration, authorization, request validation, provider calls, polling, and sanitized errors. Provider calls in these tests are mocked; live AI generation requires the settings above and has not been verified.
+Seventeen unit/API tests cover timeline mapping, split boundaries, project validation, alignment, generation authorization, OpenRouter binding aliases, safe model requests, image outputs, malformed responses, and legacy action compatibility. Provider calls are mocked; live OpenRouter requests remain unverified.
 
 For the browser smoke test, install Chromium and FFmpeg, start `npm run dev`, and generate local test media:
 
@@ -68,4 +72,4 @@ ffmpeg -f lavfi -i sine=frequency=220:duration=3 -y /tmp/playbeat-music.wav
 npm run test:browser
 ```
 
-The test defaults to `/usr/bin/chromium`; override `CHROMIUM_PATH` if necessary. `STUDIO_URL`, `TEST_VIDEO`, and `TEST_AUDIO` can override the URL/media paths. The browser test exercises real editing, save, PNG export, and video import/trim/split with music, caption, transition, and actual WebM recording. Artifacts are saved outside the repository under `/tmp/playbeat-browser-results/`.
+The test defaults to `/usr/bin/chromium`; override `CHROMIUM_PATH` if necessary. `STUDIO_URL`, `TEST_VIDEO`, and `TEST_AUDIO` can override the URL/media paths. Browser tests exercise real editing and media exports, Bootstrap navigation, mobile layout, and mocked AI review/application and invalid-plan rejection. Artifacts are saved outside the repository under `/tmp/playbeat-browser-results/`.

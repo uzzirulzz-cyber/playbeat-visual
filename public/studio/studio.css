@@ -6,3 +6,4 @@
 @media(min-width:992px){.sb-nav-fixed.sb-sidenav-toggled #layoutSidenav #layoutSidenav_content{margin-left:0;width:100%;flex-basis:100%}}
 @media(max-width:991px){.sb-nav-fixed #layoutSidenav #layoutSidenav_content{margin-left:0;width:100%;flex-basis:100%}}
 #layoutSidenav #layoutSidenav_content,#layoutSidenav #layoutSidenav_nav{transition:none}
+.ai-tools textarea{resize:vertical;font-size:12px}.ai-result{white-space:pre-wrap;font-size:12px;padding:8px 0;color:#285381}.ai-result img{width:100%;border-radius:5px;margin:8px 0}.ai-tools .control-row{align-items:stretch}.ai-tools .control-row .btn{flex:1 0 40%}.ai-tools #applyAiPlan{width:100%;margin-top:8px}
