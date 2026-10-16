@@ -30,6 +30,12 @@ npm run dev
 
 The static site runs on port 8010. Open `/studio/` to use the new editor. The static Python server does **not** run Cloudflare API functions; design and local video editing work without AI configuration.
 
+## Cloudflare Workers deployment
+
+`worker/index.js` and `wrangler.jsonc` also support a Workers project with static assets and the same AI handlers. Connect this Visual repository to the Worker that serves `visual.playbeat.live`, **not** `voice-proxy` / `voice.playbeat.live`. The deployment name is `visual-studio`, matching the Worker serving `visual.playbeat.live`. Keep the existing OpenRouter secret on that same Worker. No custom domains are changed by the checked-in config.
+
+Use an empty build command and `npx wrangler deploy` as the deployment command. The public directory is configured in `wrangler.jsonc`. Never deploy this Visual repository over the existing Voice AI app. Pages remains supported as described below.
+
 ## Cloudflare deployment
 
 1. In **Workers & Pages**, connect this repository to a **Pages** project, or use an existing compatible Pages project.
