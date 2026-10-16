@@ -2,6 +2,10 @@
 
 Creative tools for https://visual.playbeat.live/. The original live frontend is preserved at `public/index.html`; its **Open creative studio** button opens the new workspace at `/studio/`.
 
+## Interface
+
+The Studio uses the uploaded Start Bootstrap SB Admin v7.0.7 template and its bundled Bootstrap 5.2.3 CSS, served locally from `public/studio/vendor/sb-admin/`. It includes a responsive dashboard shell, collapsible sidebar, workspace navigation, Bootstrap buttons and form controls. The original editor remains available. Third-party license notices are included with the vendored stylesheet.
+
 ## Implemented
 
 - **Design:** poster, social, and video-cover templates; editable text, shapes, uploaded images; layer selection, drag positioning, Shift/grid snapping, stacking, duplication, sizing, color, opacity, canvas alignment, undo/redo, and custom canvas dimensions.
